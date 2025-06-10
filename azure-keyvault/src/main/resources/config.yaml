@@ -1,0 +1,49 @@
+
+client_id: "0bc6c55f-57e9-4554-8c64-b8f24db92742"
+YourClient_Secret: "${YOURCLIENTSECRET}"
+token_url: "https://login.microsoftonline.com/${YOUR_AZURE_SUBSCRIPTION_ID}/oauth2/v2.0/token"
+get_KeyVault_Secrets_url: "https://mulesoftkeys.vault.azure.net/secrets/?api-version=2016-10-01"
+get_KeyVault_Secret_url: "https://mulesoftkeys.vault.azure.net/secrets/ExamplePassword?api-version=2016-10-01"
+scope: "https://vault.azure.net/.default"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

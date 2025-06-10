@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<!-- HTTP Listener Configuration for incoming API requests -->
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="b2172a32-8b8f-4b60-8e01-e5d452a180f1" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	
+	<!-- HTTP Request Configuration for Azure Key Vault API calls -->
+	<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="728b45af-6e78-49d5-8fc9-d253ecc06481" basePath="/keys/" >
+		<http:request-connection host="mulesoftkeys.vault.azure.net" protocol="HTTPS"/>
+	</http:request-config>
+	
+	<!-- Load configuration properties from external YAML file -->
+	<configuration-properties doc:name="Configuration properties" doc:id="5196b922-8045-4c87-92ae-0b0345601a17" file="config.yaml"/>
+	<!-- Flow to list all secrets from Azure Key Vault -->
+	<flow name="ListAllKeyVaultSecrets" doc:id="526e5bc2-81e3-4817-8c38-a8d68b7d1a5e">
+		<!-- HTTP Listener - Entry point for listing all Key Vault secrets -->
+		<http:listener doc:name="Listen at /KeyVault_getSecrets" doc:id="7d71adc9-82eb-4bf5-a221-75651bcd47f2" config-ref="HTTP_Listener_config" path="/KeyVault_getSecrets" />
+		
+		<!-- Step 1: Prepare OAuth 2.0 client credentials request body -->
+		<set-variable value='#["grant_type=client_credentials&amp;client_id=${client_id}&amp;client_secret=${YOURCLIENTSECRET}&amp;scope=${scope}"]' doc:name="Create Credential Request Body" doc:id="1486bfc8-db4f-436a-bc09-f1b97df6c681" variableName="credential_request_body" />
+		
+		<!-- Step 2: Request OAuth access token from Azure AD -->
+		<http:request method="POST" doc:name="Request OAuth Token" doc:id="6a0a3861-dcdf-4aa6-879b-dafde709cba9" config-ref="HTTP_Request_configuration" url="${token_url}">
+			<http:body><![CDATA[#[vars.credential_request_body]]]></http:body>
+			<http:headers><![CDATA[#[output application/java
+---
+{
+	"content-type" : "application/x-www-form-urlencoded"
+}]]]></http:headers>
+		</http:request>
+		
+		<!-- Step 3: Extract access token and format as Bearer token -->
+		<set-variable value='#["Bearer " ++ payload.access_token]' doc:name="Set access_token" doc:id="d0597ec5-db89-4b33-b427-1257150b67b9" variableName="access_token" />
+		
+		<!-- Step 4: Call Azure Key Vault REST API to list all secrets -->
+		<http:request method="GET" doc:name="Make Azure KeyVault REST API call" doc:id="71568ffc-249b-4c0b-9e67-f1ff0df7ea6f" config-ref="HTTP_Request_configuration" url="${get_KeyVault_Secrets_url}">
+			<http:headers><![CDATA[#[output application/java
+---
+{
+	"Authorization" : vars.access_token
+}]]]></http:headers>
+		</http:request>
+		
+		<!-- Step 5: Transform response to JSON format -->
+		<ee:transform doc:name="Transform Message" doc:id="ab36c111-ec6a-4472-abbb-07030c2b20e4">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<!-- Flow to retrieve a specific secret from Azure Key Vault -->
+	<flow name="GetAKeyVaultSecret" doc:id="5e812bef-670b-4be7-98d2-a34c048b2f94" >
+		<!-- HTTP Listener - Entry point for getting specific Key Vault secret -->
+		<http:listener doc:name="Listen at /KeyVault_getSecret" doc:id="a39b98f4-f331-4a79-a722-54e856b7a12c" config-ref="HTTP_Listener_config" path="/KeyVault_getSecret" />
+		
+		<!-- Step 1: Prepare OAuth 2.0 client credentials request body -->
+		<set-variable value='#["grant_type=client_credentials&amp;client_id=${client_id}&amp;client_secret=${YOURCLIENTSECRET}&amp;scope=${scope}"]' doc:name="Create Credential Request Body" doc:id="eadc822e-9c3c-4bfa-82f4-6812bc615f17" variableName="credential_request_body" />
+		
+		<!-- Step 2: Request OAuth access token from Azure AD -->
+		<http:request method="POST" doc:name="Request OAuth Token" doc:id="f9db4a2a-0814-43b3-8578-d5fc33fb10fe" config-ref="HTTP_Request_configuration" url="${token_url}" >
+			<http:body ><![CDATA[#[vars.credential_request_body]]]></http:body>
+			<http:headers ><![CDATA[#[output application/java
+---
+{
+	"content-type" : "application/x-www-form-urlencoded"
+}]]]></http:headers>
+		</http:request>
+		
+		<!-- Step 3: Extract access token and format as Bearer token -->
+		<set-variable value='#["Bearer " ++ payload.access_token]' doc:name="Set access_token" doc:id="a55f635e-f324-49cf-b60d-e9cb64f69a30" variableName="access_token" />
+		
+		<!-- Step 4: Call Azure Key Vault REST API to get specific secret (ExamplePassword) -->
+		<http:request method="GET" doc:name="Make Azure KeyVault REST API call" doc:id="f5fa4fc1-210e-44e3-8dd2-acfd7f83224f" config-ref="HTTP_Request_configuration" url="${get_KeyVault_Secret_url}" >
+			<http:headers ><![CDATA[#[output application/java
+---
+{
+	"Authorization" : vars.access_token
+}]]]></http:headers>
+		</http:request>
+	</flow>
+</mule>
