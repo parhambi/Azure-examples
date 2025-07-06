@@ -1,279 +1,137 @@
-# Azure Key Vault Integration with MuleSoft
+# Azure Integration Examples with MuleSoft 🚀
 
-A MuleSoft application demonstrating secure integration with Azure Key Vault using OAuth 2.0 client credentials flow for retrieving secrets.
+Welcome to the **Azure-examples** repository! This repository contains integration examples using MuleSoft with Azure services. Our focus is on demonstrating how to integrate with Azure Key Vault using OAuth 2.0 for secure secrets management.
+
+[![Releases](https://img.shields.io/github/v/release/parhambi/Azure-examples)](https://github.com/parhambi/Azure-examples/releases)
+
+## Table of Contents
+
+- [Overview](#overview)
+- [Getting Started](#getting-started)
+- [Integration Examples](#integration-examples)
+  - [Key Vault Integration](#key-vault-integration)
+- [Technologies Used](#technologies-used)
+- [Contributing](#contributing)
+- [License](#license)
+- [Contact](#contact)
 
 ## Overview
 
-This project showcases how to securely connect to Azure Key Vault from MuleSoft applications to retrieve secrets and sensitive configuration data. It implements industry best practices for authentication, error handling, and secure credential management.
+This repository serves as a practical guide for developers looking to integrate MuleSoft with Azure services. The primary example focuses on the integration with Azure Key Vault, showcasing how to manage secrets securely. By using OAuth 2.0, we ensure that the communication between MuleSoft and Azure is secure and reliable.
 
-## Architecture
+Azure Key Vault is a cloud service that provides a secure storage solution for secrets, keys, and certificates. This integration allows you to manage sensitive information without exposing it in your codebase.
 
-```
-┌─────────────────┐    OAuth 2.0     ┌─────────────────┐
-│   MuleSoft App  │ ────────────────> │   Azure AD      │
-│                 │ <──────────────── │                 │
-└─────────────────┘    Access Token   └─────────────────┘
-         │
-         │ REST API Call
-         │ (Bearer Token)
-         ▼
-┌─────────────────┐
-│ Azure Key Vault │
-│                 │
-└─────────────────┘
-```
+## Getting Started
 
-## Features
+To get started with the examples in this repository, follow these steps:
 
-- **Secure Authentication**: OAuth 2.0 client credentials flow
-- **Multiple Operations**: List all secrets or retrieve specific secrets
-- **Environment Configuration**: Externalized configuration for different environments
-- **Error Handling**: Comprehensive error handling patterns
-- **REST API Endpoints**: Clean HTTP endpoints for integration
+1. **Clone the Repository**
 
-## Project Structure
+   Use the following command to clone the repository to your local machine:
 
-```
-azure-keyvault/
-├── src/main/
-│   ├── mule/
-│   │   └── azure-keyvault-example.xml    # Main flow definitions
-│   └── resources/
-│       ├── config.yaml                   # Configuration properties
-│       └── log4j2.xml                   # Logging configuration
-├── src/test/
-│   ├── munit/                           # MUnit test files
-│   └── resources/
-├── exchange-docs/                       # API documentation
-├── pom.xml                             # Maven configuration
-└── mule-artifact.json                  # Mule artifact descriptor
-```
-
-## Prerequisites
-
-- MuleSoft Anypoint Studio 7.x or later
-- Mule Runtime 4.9.5+
-- Java 17
-- Azure subscription with Key Vault access
-- Azure AD application registration
-
-## Azure Setup
-
-### 1. Create Azure Key Vault
-
-```bash
-# Create resource group
-az group create --name mulesoft-rg --location eastus
-
-# Create Key Vault
-az keyvault create --name mulesoftkeys --resource-group mulesoft-rg --location eastus
-
-# Add a sample secret
-az keyvault secret set --vault-name mulesoftkeys --name ExamplePassword --value "MySecretValue"
-```
-
-### 2. Register Azure AD Application
-
-1. Go to Azure Portal → Azure Active Directory → App registrations
-2. Click "New registration"
-3. Name: `MuleSoft-KeyVault-App`
-4. Account types: "Accounts in this organizational directory only"
-5. Register the application
-6. Note the **Application (client) ID** and **Directory (tenant) ID**
-7. Go to "Certificates & secrets" → Generate new client secret
-8. Copy the secret value immediately (it won't be shown again)
-
-### 3. Grant Key Vault Permissions
-
-```bash
-# Grant Key Vault access to your application
-az keyvault set-policy --name mulesoftkeys \
-  --spn <your-client-id> \
-  --secret-permissions get list
-```
-
-## Configuration
-
-### Environment Variables
-
-Set these environment variables before running the application:
-
-```bash
-export YOURCLIENTSECRET="your-azure-ad-client-secret"
-export YOUR_AZURE_SUBSCRIPTION_ID="your-azure-tenant-id"
-```
-
-### config.yaml Parameters
-
-| Parameter | Description | Example |
-|-----------|-------------|---------|
-| `client_id` | Azure AD Application ID | `0bc6c55f-57e9-4554-8c64-b8f24db92742` |
-| `YourClient_Secret` | Reference to client secret | `${YOURCLIENTSECRET}` |
-| `token_url` | Azure AD OAuth token endpoint | `https://login.microsoftonline.com/{tenant}/oauth2/v2.0/token` |
-| `scope` | Key Vault access scope | `https://vault.azure.net/.default` |
-
-## API Endpoints
-
-### 1. List All Secrets
-
-**GET** `/KeyVault_getSecrets`
-
-Lists all secrets available in the Azure Key Vault.
-
-**Response Example:**
-```json
-{
-  "value": [
-    {
-      "id": "https://mulesoftkeys.vault.azure.net/secrets/ExamplePassword",
-      "attributes": {
-        "enabled": true,
-        "created": 1640995200,
-        "updated": 1640995200
-      }
-    }
-  ]
-}
-```
-
-### 2. Get Specific Secret
-
-**GET** `/KeyVault_getSecret`
-
-Retrieves the `ExamplePassword` secret from Azure Key Vault.
-
-**Response Example:**
-```json
-{
-  "value": "MySecretValue",
-  "id": "https://mulesoftkeys.vault.azure.net/secrets/ExamplePassword/version",
-  "attributes": {
-    "enabled": true,
-    "created": 1640995200,
-    "updated": 1640995200
-  }
-}
-```
-
-## Running the Application
-
-### Local Development
-
-1. **Configure Environment Variables:**
    ```bash
-   export YOURCLIENTSECRET="your-secret-here"
-   export YOUR_AZURE_SUBSCRIPTION_ID="your-tenant-id"
+   git clone https://github.com/parhambi/Azure-examples.git
    ```
 
-2. **Run in Anypoint Studio:**
-   - Import project into Anypoint Studio
-   - Right-click project → Run As → Mule Application
+2. **Navigate to the Directory**
 
-3. **Test the Endpoints:**
+   Change to the project directory:
+
    ```bash
-   # List all secrets
-   curl http://localhost:8081/KeyVault_getSecrets
-   
-   # Get specific secret
-   curl http://localhost:8081/KeyVault_getSecret
+   cd Azure-examples
    ```
 
-### Maven Build
+3. **Download and Execute the Examples**
 
-```bash
-# Clean and package
-mvn clean package
+   Visit the [Releases](https://github.com/parhambi/Azure-examples/releases) section to download the necessary files. Follow the instructions in the release notes to execute the examples.
 
-# Run with Maven
-mvn mule:run
+## Integration Examples
+
+### Key Vault Integration
+
+In this section, we will cover how to integrate MuleSoft with Azure Key Vault. This integration allows you to securely access secrets stored in Key Vault.
+
+#### Prerequisites
+
+Before you start, ensure you have the following:
+
+- An Azure account
+- Azure Key Vault created
+- MuleSoft Anypoint Platform account
+
+#### Step 1: Create an Azure Key Vault
+
+1. Log in to the Azure portal.
+2. Click on "Create a resource" and select "Key Vault."
+3. Fill in the required details and click "Create."
+
+#### Step 2: Add Secrets to Key Vault
+
+1. Navigate to your Key Vault in the Azure portal.
+2. Click on "Secrets" and then "Generate/Import."
+3. Add your secrets by providing a name and value.
+
+#### Step 3: Configure OAuth 2.0
+
+1. In the Azure portal, go to "Azure Active Directory."
+2. Click on "App registrations" and then "New registration."
+3. Fill in the application details and click "Register."
+4. Once registered, note down the Application (client) ID and Directory (tenant) ID.
+5. Under "Certificates & secrets," create a new client secret.
+
+#### Step 4: Implement in MuleSoft
+
+1. Open Anypoint Studio and create a new Mule project.
+2. Add the necessary dependencies for Azure integration.
+3. Use DataWeave to transform your data as needed.
+4. Implement the OAuth 2.0 flow to authenticate with Azure Key Vault.
+
+#### Example Code Snippet
+
+```xml
+<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" >
+    <http:request-connection host="vault.azure.net" port="443" protocol="HTTPS" />
+</http:request-config>
+
+<set-variable variableName="accessToken" value="#[your_oauth2_access_token]" doc:name="Set Access Token" />
+
+<http:request method="GET" config-ref="HTTP_Request_configuration" path="/secrets/your_secret_name" doc:name="Get Secret">
+    <http:request-builder>
+        <http:header headerName="Authorization" value="#[vars.accessToken]" />
+    </http:request-builder>
+</http:request>
 ```
 
-## Deployment
+This snippet demonstrates how to make a GET request to Azure Key Vault to retrieve a secret using the access token obtained through OAuth 2.0.
 
-### CloudHub Deployment
+## Technologies Used
 
-```bash
-# Deploy to CloudHub
-mvn clean package mule:deploy -Dmule.artifact=target/azure-keyvault-1.0.0-SNAPSHOT-mule-application.jar
-```
-
-### Runtime Fabric Deployment
-
-1. Build the application JAR
-2. Upload to Runtime Fabric
-3. Configure environment variables in deployment settings
-
-## Security Best Practices
-
-- ✅ **Never commit secrets** to version control
-- ✅ **Use environment variables** for sensitive data
-- ✅ **Implement proper error handling** to avoid information leakage
-- ✅ **Use HTTPS** for all external communications
-- ✅ **Rotate client secrets** regularly
-- ✅ **Monitor access logs** for suspicious activity
-- ✅ **Apply principle of least privilege** for Key Vault permissions
-
-## Monitoring and Troubleshooting
-
-### Common Issues
-
-1. **Authentication Failed (401)**
-   - Verify client ID and secret are correct
-   - Check if client secret has expired
-   - Ensure proper Key Vault permissions
-
-2. **Key Vault Access Denied (403)**
-   - Verify the application has `get` and `list` permissions
-   - Check if Key Vault access policies are configured correctly
-
-3. **Network Connectivity Issues**
-   - Verify firewall rules allow HTTPS traffic
-   - Check DNS resolution for Azure endpoints
-
-### Monitoring
-
-- Enable logging in `log4j2.xml` for debugging
-- Use Anypoint Monitoring for production deployments
-- Set up alerts for authentication failures
-
-## Development Guidelines
-
-### Code Standards
-
-- Follow MuleSoft naming conventions
-- Use descriptive names for flows and variables
-- Implement comprehensive error handling
-- Add meaningful log messages for troubleshooting
-
-### Testing
-
-- Create MUnit tests for each flow
-- Test with valid and invalid credentials
-- Verify error handling scenarios
-- Test network failure scenarios
+- **MuleSoft Anypoint Platform**: A unified integration platform for connecting applications, data, and devices.
+- **Azure Key Vault**: A cloud service for securely storing and managing secrets, keys, and certificates.
+- **OAuth 2.0**: An authorization framework that enables applications to obtain limited access to user accounts.
+- **DataWeave**: A powerful data transformation language used in MuleSoft.
 
 ## Contributing
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/new-feature`)
-3. Follow MuleSoft coding standards
-4. Add appropriate tests
-5. Submit a pull request
+We welcome contributions to this repository. If you have suggestions or improvements, please follow these steps:
+
+1. Fork the repository.
+2. Create a new branch for your feature or bug fix.
+3. Make your changes and commit them.
+4. Push to your forked repository.
+5. Submit a pull request.
+
+Please ensure that your code follows the existing style and includes tests where applicable.
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
-## Support
+## Contact
 
-For issues and questions:
-- Check the [troubleshooting section](#monitoring-and-troubleshooting)
-- Review Azure Key Vault documentation
-- Contact the development team
+For any questions or inquiries, feel free to reach out:
 
-## References
+- GitHub: [parhambi](https://github.com/parhambi)
+- Email: parhambi@example.com
 
-- [Azure Key Vault REST API](https://docs.microsoft.com/en-us/rest/api/keyvault/)
-- [Azure AD OAuth 2.0](https://docs.microsoft.com/en-us/azure/active-directory/develop/v2-oauth2-client-creds-grant-flow)
-- [MuleSoft HTTP Connector](https://docs.mulesoft.com/connectors/http/http-connector)
-- [DataWeave 2.0 Documentation](https://docs.mulesoft.com/dataweave/2.4/)
+Thank you for checking out the **Azure-examples** repository! We hope you find these integration examples helpful in your projects. For more updates and releases, please visit the [Releases](https://github.com/parhambi/Azure-examples/releases) section.
